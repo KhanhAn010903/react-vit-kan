@@ -6,7 +6,15 @@ import UserDetail from "./user.detail";
 import { deleteUserById } from "../../services/api.service";
 
 const UserTable = (props) => {
-  const { dataUser, loadUser } = props;
+  const {
+    dataUser,
+    loadUser,
+    current,
+    pageSize,
+    total,
+    setCurrent,
+    setPageSize,
+  } = props;
   const [isModalUpdateOpen, setIsModalUpdateOpen] = useState(false);
   const [isModalUserDetailOpen, setModalUserDetailOpen] = useState(false);
   const [userDetail, setUserDetail] = useState(null);
@@ -20,7 +28,7 @@ const UserTable = (props) => {
         description: "Xóa người dùng thành công",
       });
       await loadUser();
-    }else{
+    } else {
       notification.error({
         message: "error delete user",
         description: JSON.stringify(res.message),
@@ -28,6 +36,12 @@ const UserTable = (props) => {
     }
   };
   const columns = [
+    {
+      title: "STT",
+      render: (_, record, index) => {
+        return <>{index + 1 + (current - 1) * pageSize}</>;
+      },
+    },
     {
       title: "Id",
       dataIndex: "_id",
@@ -76,9 +90,44 @@ const UserTable = (props) => {
     },
   ];
 
+  const onChange = (pagination, filters, sorter, extra) => {
+    //setCurrent, setPageSize
+    //Nếu thay đổi trang : current
+    if (pagination && pagination.current) {
+      if (+pagination.current !== +current) {
+        setCurrent(+pagination.current); //"5" => 5
+      }
+    }
+    //Nếu thay đổi tổng số phần tử : pageSize
+    if (pagination && pagination.pageSize) {
+      if (+pagination.pageSize !== +pageSize) {
+        setPageSize(+pagination.pageSize); //"5" => 5
+      }
+    }
+  };
+
   return (
     <>
-      <Table columns={columns} dataSource={dataUser} rowKey={"_id"} />
+      <Table
+        pagination={{
+          current: current,
+          pageSize: pageSize,
+          showSizeChanger: true,
+          total: total,
+          showTotal: (total, range) => {
+            return (
+              <div>
+                {" "}
+                {range[0]}-{range[1]} trên {total} rows
+              </div>
+            );
+          },
+        }}
+        onChange={onChange}
+        columns={columns}
+        dataSource={dataUser}
+        rowKey={"_id"}
+      />
       <UpdateUserModal
         isModalUpdateOpen={isModalUpdateOpen}
         setIsModalUpdateOpen={setIsModalUpdateOpen}
@@ -91,6 +140,7 @@ const UserTable = (props) => {
         setModalUserDetailOpen={setModalUserDetailOpen}
         userDetail={userDetail}
         setUserDetail={setUserDetail}
+        loadUser={loadUser}
       />
     </>
   );
